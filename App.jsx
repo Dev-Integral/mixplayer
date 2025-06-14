@@ -23,10 +23,10 @@ async function setupPlayer() {
   });
 
   await TrackPlayer.add({
-    id: 'dj-mix',
+    id: 'radio-o',
     url: MIX_URL, // Replace with your URL
-    title: 'My DJ Mix',
-    artist: 'Your DJ Name',
+    title: 'Radio O',
+    artist: 'Your soul station',
   });
 }
 
