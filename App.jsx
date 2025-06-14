@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
 import TrackPlayer, { 
   Capability, 
@@ -9,7 +9,6 @@ import TrackPlayer, {
 
 const MIX_URL = "https://stream-169.zeno.fm/htrnfxelk4otv?zt=eyJhbGciOiJIUzI1NiJ9.eyJzdHJlYW0iOiJodHJuZnhlbGs0b3R2IiwiaG9zdCI6InN0cmVhbS0xNjkuemVuby5mbSIsInJ0dGwiOjUsImp0aSI6ImdmUEtTeVotUUFlWUc3cjdINEMyMEEiLCJpYXQiOjE3NDc1Nzk4MTYsImV4cCI6MTc0NzU3OTg3Nn0.5-gLuUNgePaLXdA70Mr_IwHtN-YygZx1t74Hg2CVy34";
 
-// Get screen width for slider
 const { width: screenWidth } = Dimensions.get('window');
 
 // Local images from assets folder
@@ -45,6 +44,8 @@ async function setupPlayer() {
 export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const scrollViewRef = useRef(null);
+  const slideInterval = useRef(null);
 
   // Initialize player
   useEffect(() => {
@@ -52,8 +53,25 @@ export default function App() {
     
     return () => {
       TrackPlayer.reset();
+      clearInterval(slideInterval.current);
     };
   }, []);
+
+  // Auto-play slider
+  useEffect(() => {
+    const autoPlay = () => {
+      const nextSlide = (currentSlide + 1) % SLIDER_IMAGES.length;
+      scrollViewRef.current?.scrollTo({
+        x: nextSlide * screenWidth,
+        animated: true
+      });
+      setCurrentSlide(nextSlide);
+    };
+
+    slideInterval.current = setInterval(autoPlay, 3000); // Change slide every 3 seconds
+
+    return () => clearInterval(slideInterval.current);
+  }, [currentSlide]);
 
   // Toggle play/pause
   const togglePlayback = async () => {
@@ -81,9 +99,10 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      {/* Tile 1: Image Slider */}
+      {/* Tile 1: Image Slider - Increased height */}
       <View style={styles.sliderContainer}>
         <ScrollView
+          ref={scrollViewRef}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
@@ -139,7 +158,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   sliderContainer: {
-    height: 200,
+    height: 300, // Increased height for the slider
     marginBottom: 20,
     position: 'relative',
   },
@@ -150,14 +169,14 @@ const styles = StyleSheet.create({
   },
   pagination: {
     position: 'absolute',
-    bottom: 10,
+    bottom: 20,
     flexDirection: 'row',
     alignSelf: 'center',
   },
   paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#888',
     marginHorizontal: 5,
   },
