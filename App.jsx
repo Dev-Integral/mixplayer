@@ -99,7 +99,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      {/* Tile 1: Image Slider - Increased height */}
+      {/* Tile 1: Image Slider */}
       <View style={styles.sliderContainer}>
         <ScrollView
           ref={scrollViewRef}
@@ -130,11 +130,12 @@ export default function App() {
         </View>
       </View>
 
-      {/* Tile 2: Album Art */}
+      {/* Tile 2: Album Art - Made larger */}
       <View style={styles.albumTile}>
         <Image 
           source={require('./assets/1.png')}
           style={styles.albumArt}
+          resizeMode="contain"
         />
       </View>
 
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1DB954',
   },
   albumTile: {
-    height: 200,
+    height: 300, // Made same height as slider
     backgroundColor: '#1E1E1E',
     borderRadius: 10,
     marginBottom: 20,
@@ -192,9 +193,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   albumArt: {
-    width: 150,
-    height: 150,
-    borderRadius: 10,
+    width: '90%', // Takes 90% of container width
+    height: '90%', // Takes 90% of container height
   },
   controlsTile: {
     height: 80,
