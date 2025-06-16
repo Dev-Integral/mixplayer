@@ -1,4 +1,8 @@
 {
   "name": "mixplayer",
-  "displayName": "Radio O"
+  "displayName": "Radio O",
+  "version": "1.0.0",
+  "android": {
+    "package": "com.digitalvision.radioo"
+  }
 }
