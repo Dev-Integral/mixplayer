@@ -6,13 +6,14 @@ import {
   StyleSheet, 
   Image, 
   Dimensions, 
-  ScrollView 
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
 import TrackPlayer, { 
   Capability, 
   State, 
   Event, 
-  useTrackPlayerEvents 
+  useTrackPlayerEvents
 } from 'react-native-track-player';
 import radio_o from "../assets/radio_o.png";
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -23,7 +24,6 @@ const MIX_URL = "https://stream-169.zeno.fm/htrnfxelk4otv?zt=eyJhbGciOiJIUzI1NiJ
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// Local images from assets folder
 const SLIDER_IMAGES = [
   require('../assets/1.png'),
   require('../assets/2.png'),
@@ -36,17 +36,24 @@ const SLIDER_IMAGES = [
   require('../assets/9.png'),
 ];
 
-// Setup audio player
 async function setupPlayer() {
   await TrackPlayer.setupPlayer();
   await TrackPlayer.updateOptions({
     capabilities: [
       Capability.Play,
       Capability.Pause,
+      Capability.Stop,
+      Capability.SeekTo,
     ],
     compactCapabilities: [
       Capability.Play,
       Capability.Pause,
+      Capability.Stop,
+    ],
+    notificationCapabilities: [
+      Capability.Play,
+      Capability.Pause,
+      Capability.Stop,
     ],
   });
 
@@ -56,17 +63,18 @@ async function setupPlayer() {
     title: 'Radio O',
     artist: 'Your soul station',
     artwork: require('../assets/1.png'),
+    isLiveStream: true
   });
 }
 
 export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollViewRef = useRef(null);
   const slideInterval = useRef(null);
   const [currentKey, setCurrentKey] = useState('home');
 
-  // Initialize player
   useEffect(() => {
     setupPlayer();
     
@@ -76,7 +84,6 @@ export default function Home() {
     };
   }, []);
 
-  // Auto-play slider
   useEffect(() => {
     const autoPlay = () => {
       const nextSlide = (currentSlide + 1) % SLIDER_IMAGES.length;
@@ -88,26 +95,37 @@ export default function Home() {
     };
 
     slideInterval.current = setInterval(autoPlay, 3000);
-
     return () => clearInterval(slideInterval.current);
   }, [currentSlide]);
 
-  // Toggle play/pause
   const togglePlayback = async () => {
     const state = await TrackPlayer.getState();
+    
     if (state === State.Playing) {
-      await TrackPlayer.pause();
+      await TrackPlayer.stop();
       setIsPlaying(false);
     } else {
-      await TrackPlayer.play();
-      setIsPlaying(true);
+      setIsLoading(true);
+      try {
+        await TrackPlayer.play();
+      } catch (error) {
+        console.error('Playback error:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  // Listen for playback state
   useTrackPlayerEvents([Event.PlaybackState], async (event) => {
-    if (event.state === State.Playing) setIsPlaying(true);
-    else if (event.state === State.Paused) setIsPlaying(false);
+    if (event.state === State.Playing) {
+      setIsPlaying(true);
+    } else if (event.state === State.Stopped) {
+      setIsPlaying(false);
+    } else if (event.state === State.Buffering) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+    }
   });
 
   const handleScroll = (event) => {
@@ -120,12 +138,11 @@ export default function Home() {
     <View style={styles.container}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Image style={styles.header} source={radio_o} />
-        <TouchableOpacity onPress={()=> setCurrentKey('contact')} style={styles.contactButton}>
+        <TouchableOpacity onPress={() => setCurrentKey('contact')} style={styles.contactButton}>
           <FontAwesomeIcon icon={faContactBook} size={24} color="white" />
         </TouchableOpacity>
       </View>
 
-      {/* Image Slider */}
       <View style={styles.sliderContainer}>
         <ScrollView
           ref={scrollViewRef}
@@ -157,7 +174,6 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Album Art */}
       <View style={styles.albumTile}>
         <Image 
           source={require('../assets/10.png')}
@@ -165,11 +181,14 @@ export default function Home() {
         />
       </View>
 
-      {/* Controls */}
       <View style={styles.controlsTile}>
-        <TouchableOpacity onPress={togglePlayback} style={styles.playButton}>
-          <Text style={styles.playButtonText}>{isPlaying ? '⏸' : '▶'}</Text>
-        </TouchableOpacity>
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#1DB954" />
+        ) : (
+          <TouchableOpacity onPress={togglePlayback} style={styles.playButton}>
+            <Text style={styles.playButtonText}>{isPlaying ? '■' : '▶'}</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View> 
   ) : (<Contact setCurrentKey={setCurrentKey} />);
