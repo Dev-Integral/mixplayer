@@ -19,8 +19,8 @@ android {
         applicationId "com.digitalvision.radioo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 13
-        versionName "1.7"
+        versionCode 14
+        versionName "1.8"
     }
 
     signingConfigs {
