@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sliderContainer: {
-    height: Dimensions.get('window').width > 576 ? 400 : 250,
+    height: Dimensions.get('window').width > 767 ? 400 : 250,
     marginBottom: 20,
     position: 'relative',
   },
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'yellow',
   },
   albumTile: {
-    height: Dimensions.get('window').width > 576 ? 350 : 250,
+    height: Dimensions.get('window').width > 767 ? 350 : 250,
     backgroundColor: '#1E1E1E',
     borderRadius: 30,
     marginBottom: 20,
