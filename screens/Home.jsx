@@ -36,35 +36,57 @@ const SLIDER_IMAGES = [
   require('../assets/9.png'),
 ];
 
-async function setupPlayer() {
-  await TrackPlayer.setupPlayer();
-  await TrackPlayer.updateOptions({
-    capabilities: [
-      Capability.Play,
-      Capability.Pause,
-      Capability.Stop,
-      Capability.SeekTo,
-    ],
-    compactCapabilities: [
-      Capability.Play,
-      Capability.Pause,
-      Capability.Stop,
-    ],
-    notificationCapabilities: [
-      Capability.Play,
-      Capability.Pause,
-      Capability.Stop,
-    ],
-  });
+// Global player state
+let playerInitialized = false;
 
-  await TrackPlayer.add({
-    id: 'radio-o',
-    url: MIX_URL,
-    title: 'Radio O',
-    artist: 'Your soul station',
-    artwork: require('../assets/1.png'),
-    isLiveStream: true
-  });
+async function setupPlayer() {
+  if (playerInitialized) {
+    console.log('Player already initialized - skipping');
+    return;
+  }
+
+  try {
+    console.log('Initializing player...');
+    await TrackPlayer.setupPlayer();
+    playerInitialized = true;
+
+    await TrackPlayer.updateOptions({
+      capabilities: [
+        Capability.Play,
+        Capability.Pause,
+        Capability.Stop,
+        Capability.SeekTo,
+      ],
+      compactCapabilities: [
+        Capability.Play,
+        Capability.Pause,
+        Capability.Stop,
+      ],
+      notificationCapabilities: [
+        Capability.Play,
+        Capability.Pause,
+        Capability.Stop,
+      ],
+    });
+
+    await TrackPlayer.add({
+      id: 'radio-o',
+      url: MIX_URL,
+      title: 'Radio O',
+      artist: 'Your soul station',
+      artwork: require('../assets/1.png'),
+      isLiveStream: true
+    });
+
+    console.log('Player initialized successfully');
+  } catch (error) {
+    console.error('Player setup error:', error);
+    if (error.message.includes('already been initialized')) {
+      playerInitialized = true;
+      return;
+    }
+    throw error;
+  }
 }
 
 export default function Home() {
@@ -76,11 +98,20 @@ export default function Home() {
   const [currentKey, setCurrentKey] = useState('home');
 
   useEffect(() => {
-    setupPlayer();
-    
+    const initPlayer = async () => {
+      try {
+        await setupPlayer();
+      } catch (error) {
+        console.error('Initialization error:', error);
+      }
+    };
+
+    initPlayer();
+
     return () => {
-      TrackPlayer.reset();
+      console.log('Cleaning up...');
       clearInterval(slideInterval.current);
+      // Note: We don't reset the player here to maintain background playback
     };
   }, []);
 
@@ -99,32 +130,46 @@ export default function Home() {
   }, [currentSlide]);
 
   const togglePlayback = async () => {
-    const state = await TrackPlayer.getState();
-    
-    if (state === State.Playing) {
-      await TrackPlayer.stop();
-      setIsPlaying(false);
-    } else {
+    try {
       setIsLoading(true);
-      try {
-        await TrackPlayer.play();
-      } catch (error) {
-        console.error('Playback error:', error);
-      } finally {
-        setIsLoading(false);
+      
+      if (!playerInitialized) {
+        await setupPlayer();
       }
+
+      const state = await TrackPlayer.getState();
+      if (state === State.Playing) {
+        console.log('Stopping playback...');
+        await TrackPlayer.stop();
+        setIsPlaying(false);
+      } else {
+        console.log('Starting playback...');
+        await TrackPlayer.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Playback toggle error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useTrackPlayerEvents([Event.PlaybackState], async (event) => {
-    if (event.state === State.Playing) {
-      setIsPlaying(true);
-    } else if (event.state === State.Stopped) {
-      setIsPlaying(false);
-    } else if (event.state === State.Buffering) {
-      setIsLoading(true);
-    } else {
-      setIsLoading(false);
+    console.log('Playback state changed:', event.state);
+    switch (event.state) {
+      case State.Playing:
+        setIsPlaying(true);
+        setIsLoading(false);
+        break;
+      case State.Stopped:
+        setIsPlaying(false);
+        setIsLoading(false);
+        break;
+      case State.Buffering:
+        setIsLoading(true);
+        break;
+      default:
+        setIsLoading(false);
     }
   });
 
@@ -137,7 +182,11 @@ export default function Home() {
   return currentKey === "home" ? (
     <View style={styles.container}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Image style={styles.header} source={radio_o} />
+        <Image 
+          style={styles.header} 
+          source={radio_o} 
+          onError={(e) => console.log('Header image error:', e.nativeEvent.error)}
+        />
         <TouchableOpacity onPress={() => setCurrentKey('contact')} style={styles.contactButton}>
           <FontAwesomeIcon icon={faContactBook} size={24} color="white" />
         </TouchableOpacity>
@@ -158,6 +207,7 @@ export default function Home() {
               key={index}
               source={image}
               style={styles.slideImage}
+              onError={(e) => console.log(`Slider image ${index} error:`, e.nativeEvent.error)}
             />
           ))}
         </ScrollView>
@@ -178,6 +228,7 @@ export default function Home() {
         <Image 
           source={require('../assets/10.png')}
           style={styles.albumArt}
+          onError={(e) => console.log('Album art error:', e.nativeEvent.error)}
         />
       </View>
 
@@ -191,7 +242,7 @@ export default function Home() {
         )}
       </View>
     </View> 
-  ) : (<Contact setCurrentKey={setCurrentKey} />);
+  ) : <Contact setCurrentKey={setCurrentKey} />;
 }
 
 const styles = StyleSheet.create({
@@ -201,13 +252,13 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    width: 120,
-    height: 70,
+    width: 80,
+    height: 50,
     resizeMode: "cover",
     marginBottom: 20,
   },
   sliderContainer: {
-    height: Dimensions.get('window').width > 767 ? 400 : 250,
+    height: Dimensions.get('window').width > 767 ? 350 : 220,
     marginBottom: 20,
     position: 'relative',
   },
@@ -234,7 +285,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'yellow',
   },
   albumTile: {
-    height: Dimensions.get('window').width > 767 ? 350 : 250,
+    height: Dimensions.get('window').width > 767 ? 350 : 220,
     backgroundColor: '#1E1E1E',
     borderRadius: 30,
     marginBottom: 20,
