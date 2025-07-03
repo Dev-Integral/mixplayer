@@ -38,6 +38,13 @@ const Contact = ({ setCurrentKey }) => {
           <FontAwesomeIcon icon={faWhatsapp} size={24} color="#25D366" />
           <Text style={styles.linkText}>Connect with us on WhatsApp</Text>
         </Pressable>
+
+        <Pressable
+          onPress={() => Linking.openURL("https://radio-o.co.uk/support-us")}
+          style={styles.linkButton}
+        >
+          <Text style={styles.linkText}>Support Us</Text>
+        </Pressable>
       </View>
     </View>
   );

@@ -25,15 +25,16 @@ const MIX_URL = "https://stream-169.zeno.fm/htrnfxelk4otv?zt=eyJhbGciOiJIUzI1NiJ
 const { width: screenWidth } = Dimensions.get('window');
 
 const SLIDER_IMAGES = [
-  require('../assets/1.png'),
-  require('../assets/2.png'),
-  require('../assets/3.png'),
-  require('../assets/4.png'),
-  require('../assets/5.png'),
-  require('../assets/6.png'),
-  require('../assets/7.png'),
-  require('../assets/8.png'),
-  require('../assets/9.png'),
+  "https://i.ibb.co/9m6Tks9d/1.png",
+  
+  "https://i.ibb.co/YFVLjphF/2.png",
+  "https://i.ibb.co/k2c9CB4X/3.png",
+  "https://i.ibb.co/HDqY0Prr/4.png",
+  "https://i.ibb.co/ZRWsm6mD/5.png",
+  "https://i.ibb.co/C5rp5xwZ/6.png",
+  "https://i.ibb.co/c9TdV7p/7.png",
+  "https://i.ibb.co/JR6261VH/8.png",
+  "https://i.ibb.co/g8kgVJ2/9.png",
 ];
 
 // Global player state
@@ -74,7 +75,7 @@ async function setupPlayer() {
       url: MIX_URL,
       title: 'Radio O',
       artist: 'Your soul station',
-      artwork: require('../assets/1.png'),
+      artwork: "https://i.ibb.co/9m6Tks9d/1.png",
       isLiveStream: true
     });
 
@@ -205,7 +206,7 @@ export default function Home() {
           {SLIDER_IMAGES.map((image, index) => (
             <Image 
               key={index}
-              source={image}
+              source={{ uri: image }}
               style={styles.slideImage}
               onError={(e) => console.log(`Slider image ${index} error:`, e.nativeEvent.error)}
             />
@@ -226,7 +227,7 @@ export default function Home() {
 
       <View style={styles.albumTile}>
         <Image 
-          source={require('../assets/10.png')}
+          source={{ uri:'https://i.ibb.co/PzPjmzmS/10.png'}}
           style={styles.albumArt}
           onError={(e) => console.log('Album art error:', e.nativeEvent.error)}
         />
